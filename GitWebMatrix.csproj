@@ -67,9 +67,9 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if not exist "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Components\$(TargetName)" md "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Components\$(TargetName)"
-copy "$(TargetDir)$(TargetName).dll" "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Components\$(TargetName)" &gt; NUL
-copy "$(TargetDir)$(TargetName).pdb" "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Components\$(TargetName)" &gt; NUL</PostBuildEvent>
+    <PostBuildEvent>if not exist "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)" md "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)"
+copy "$(TargetDir)$(TargetName).dll" "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)" &gt; NUL
+copy "$(TargetDir)$(TargetName).pdb" "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)" &gt; NUL</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>if exist "$(TEMP)\WebMatrix.crash.info" del "$(TEMP)\WebMatrix.crash.info"

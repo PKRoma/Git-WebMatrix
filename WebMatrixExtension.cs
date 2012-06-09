@@ -1,20 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
-using GitScc;
 using Microsoft.WebMatrix.Extensibility;
+using GitScc;
 
 namespace GitWebMatrix
 {
     /// <summary>
     /// A sample WebMatrix extension.
     /// </summary>
-    [Export(typeof(IExtension))]
-    public class GitWebMatrix : ExtensionBase
+    [Export(typeof(Extension))]
+    public class GitWebMatrix : Extension
     {
+        private IWebMatrixHost webMatrixHost;
         /// <summary>
         /// Stores a reference to the small star image.
         /// </summary>
@@ -29,23 +30,8 @@ namespace GitWebMatrix
         /// Initializes a new instance of the GitWebMatrix class.
         /// </summary>
         public GitWebMatrix()
-            : base("GitWebMatrix", "1.0")
+            : base("Git")
         {
-            // Add a simple button to the Ribbon
-            RibbonItemsCollection.Add(
-                new RibbonGroup(
-                    "Git",
-                    new IRibbonItem[]
-                    {
-                        new RibbonButton(
-                            "Git Bash",
-                            new DelegateCommand(HandleRibbonButtonInvoke),
-                            null,
-                            _starImageSmall,
-                            _starImageLarge)
-                    }));
-
-
             GitBash.GitExePath = new string[] {
 			    @"C:\Program Files\Git\bin\sh.exe",
 				@"C:\Program Files (x86)\Git\bin\sh.exe",
@@ -53,20 +39,28 @@ namespace GitWebMatrix
             .Where(p => File.Exists(p))
             .FirstOrDefault();
 
+            this.gitBashCommand = new DelegateCommand((object param) => true, delegate(object param)
+            {
+                GitBash.OpenGitBash(webMatrixHost.WebSite.Path);
+            });
         }
 
-        /// <summary>
-        /// Called when the Ribbon button is invoked.
-        /// </summary>
-        /// <param name="parameter">Unused.</param>
-        private void HandleRibbonButtonInvoke(object parameter)
-        {
-            //if (WebMatrixHost.ShowDialog(this.Name, "Open a browser window for the site?").GetValueOrDefault())
-            //{
-            //    Process.Start(WebMatrixHost.WebSite.Uri.AbsoluteUri);
-            //}
+        private readonly DelegateCommand gitBashCommand;
 
-            GitBash.OpenGitBash(WebMatrixHost.WebSite.Path);
+        protected override void Initialize(IWebMatrixHost host, ExtensionInitData initData)
+        {
+            this.webMatrixHost = host;
+            this.webMatrixHost.WebSiteChanged += new EventHandler<EventArgs>(host_WebSiteChanged);
+
+            var list = new List<RibbonButton>();
+            list.Add(new RibbonButton("Git Bash", this.gitBashCommand, null, _starImageSmall, _starImageLarge));
+            var button = new RibbonSplitButton("Git", this.gitBashCommand, null, list, _starImageSmall, _starImageLarge); ;
+            initData.RibbonItems.Add(button);
+        }
+
+        void host_WebSiteChanged(object sender, EventArgs e)
+        {
+            //throw new NotImplementedException();
         }
     }
 }
