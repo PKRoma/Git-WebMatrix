@@ -9,28 +9,13 @@ using GitScc;
 
 namespace GitWebMatrix
 {
-    /// <summary>
-    /// A sample WebMatrix extension.
-    /// </summary>
     [Export(typeof(Extension))]
     public class GitWebMatrix : Extension
     {
         private IWebMatrixHost webMatrixHost;
-        /// <summary>
-        /// Stores a reference to the small star image.
-        /// </summary>
-        private readonly BitmapImage _starImageSmall = new BitmapImage(new Uri("pack://application:,,,/GitWebMatrix;component/git-16.png", UriKind.Absolute));
 
-        /// <summary>
-        /// Stores a reference to the large star image.
-        /// </summary>
-        private readonly BitmapImage _starImageLarge = new BitmapImage(new Uri("pack://application:,,,/GitWebMatrix;component/git-32.png", UriKind.Absolute));
-
-        /// <summary>
-        /// Initializes a new instance of the GitWebMatrix class.
-        /// </summary>
         public GitWebMatrix()
-            : base("Git")
+            : base(Resources.Name)
         {
             GitBash.GitExePath = new string[] {
 			    @"C:\Program Files\Git\bin\sh.exe",
@@ -39,7 +24,7 @@ namespace GitWebMatrix
             .Where(p => File.Exists(p))
             .FirstOrDefault();
 
-            this.gitBashCommand = new DelegateCommand((object param) => true, delegate(object param)
+            this.gitBashCommand = new DelegateCommand((object param) => GitBash.Exists, delegate(object param)
             {
                 GitBash.OpenGitBash(webMatrixHost.WebSite.Path);
             });
@@ -53,8 +38,8 @@ namespace GitWebMatrix
             this.webMatrixHost.WebSiteChanged += new EventHandler<EventArgs>(host_WebSiteChanged);
 
             var list = new List<RibbonButton>();
-            list.Add(new RibbonButton("Git Bash", this.gitBashCommand, null, _starImageSmall, _starImageLarge));
-            var button = new RibbonSplitButton("Git", this.gitBashCommand, null, list, _starImageSmall, _starImageLarge); ;
+            list.Add(new RibbonButton("Git Bash", this.gitBashCommand, null, Resources.git_16, Resources.git_32));
+            var button = new RibbonSplitButton("Git", this.gitBashCommand, null, list, Resources.git_16, Resources.git_32);
             initData.RibbonItems.Add(button);
         }
 
