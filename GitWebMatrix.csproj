@@ -31,11 +31,32 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GitApi">
+      <HintPath>lib\GitApi.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>lib\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.WebMatrix.Extensibility">
       <HintPath>C:\Program Files (x86)\Microsoft WebMatrix\Microsoft.WebMatrix.Extensibility.dll</HintPath>
     </Reference>
+    <Reference Include="Mono.Posix">
+      <HintPath>lib\Mono.Posix.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Security">
+      <HintPath>lib\Mono.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="NGit">
+      <HintPath>lib\NGit.dll</HintPath>
+    </Reference>
+    <Reference Include="NSch">
+      <HintPath>lib\NSch.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="Sharpen">
+      <HintPath>lib\Sharpen.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
@@ -50,7 +71,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DelegateCommand.cs" />
-    <Compile Include="GitBash.cs" />
+    <Compile Include="FileStatusTracker.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -72,17 +95,28 @@
     <None Include="Resources\git_16.png" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\status_added.png" />
+    <Content Include="Resources\status_conflict.png" />
+    <Content Include="Resources\status_deleted.png" />
+    <Content Include="Resources\status_ignored.png" />
     <Content Include="Resources\git_32.png" />
+    <Content Include="Resources\git_bash.png" />
+    <Content Include="Resources\git_init.png" />
+    <Content Include="Resources\status_modified.png" />
+    <Content Include="Resources\status_new.png" />
+    <Content Include="Resources\status_notcontrolled.png" />
+    <Content Include="Resources\status_staged.png" />
+    <Content Include="Resources\status_tracked.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if not exist "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)" md "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)"
-copy "$(TargetDir)$(TargetName).dll" "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)" &gt; NUL
-copy "$(TargetDir)$(TargetName).pdb" "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)" &gt; NUL</PostBuildEvent>
+copy "$(TargetDir)*.dll" "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)" &gt; NUL
+copy "$(TargetDir)*.pdb" "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\$(TargetName)" &gt; NUL</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>if exist "$(TEMP)\WebMatrix.crash.info" del "$(TEMP)\WebMatrix.crash.info"
-if exist "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Components\DisabledExtensions" del "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Components\DisabledExtensions"</PreBuildEvent>
+if exist "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\DisabledExtensions" del "$(USERPROFILE)\AppData\Local\Microsoft\WebMatrix\Extensions\20RC\DisabledExtensions"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

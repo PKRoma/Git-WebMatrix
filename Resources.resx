@@ -124,7 +124,37 @@
   <data name="git_32" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\git_32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="git_bash" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\git_bash.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="git_init" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\git_init.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="Name" xml:space="preserve">
     <value>Git</value>
+  </data>
+  <data name="status_conflict" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\status_conflict.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="status_deleted" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\status_deleted.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="status_ignored" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\status_ignored.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="status_new" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\status_new.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="status_staged" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\status_staged.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="status_tracked" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\status_tracked.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="status_added" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\status_added.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="status_modified" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\status_modified.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
