@@ -16,11 +16,12 @@ namespace GitWebMatrix
 		FileStatusTracker tracker;
 
 		[Import(typeof(ISiteFileWatcherService))]
-		private ISiteFileWatcherService SiteFileWatcherService { get; set; }
+		private ISiteFileWatcherService siteFileWatcherService { get; set; }
 
 		private IWebMatrixHost webMatrixHost;
 		private readonly DelegateCommand gitBashCommand;
 		private readonly DelegateCommand gitInitCommand;
+		private readonly DelegateCommand gitCloneCommand;
 		private readonly DelegateCommand gitCommitCommand;
 		private readonly DelegateCommand gitLogCommand;
 		private readonly DelegateCommand gitRefreshCommand;
@@ -37,12 +38,14 @@ namespace GitWebMatrix
 			.Where(p => File.Exists(p))
 			.FirstOrDefault();
 
-			tracker = new FileStatusTracker();
-			tracker.OnRefresh += (o, e) => Refresh();
-
 			this.gitInitCommand = new DelegateCommand((object param) => !tracker.HasGitRepository, delegate(object param)
 			{
 				
+			});
+
+			this.gitCloneCommand = new DelegateCommand((object param) => !tracker.HasGitRepository, delegate(object param)
+			{
+
 			});
 
 			this.gitCommitCommand = new DelegateCommand((object param) => tracker.HasGitRepository, delegate(object param)
@@ -61,8 +64,8 @@ namespace GitWebMatrix
 
 			this.gitRefreshCommand = new DelegateCommand((object param) => true, delegate(object param)
 			{
-                tracker.Reload();
-				this.Refresh();
+				tracker.Refresh();
+				RefreshFileStatus();
 			});
 		}
 
@@ -74,9 +77,10 @@ namespace GitWebMatrix
 			this.webMatrixHost.TreeItemRemoved += new EventHandler<TreeItemEventArgs>(webMatrixHost_TreeItemRemoved);
 
 			var list = new List<RibbonButton>{
-				new RibbonButton("Init Git Repository", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
-				//new RibbonButton("Commit Changes", this.gitCommitCommand, null, Resources.git_16, Resources.git_32),
-				//new RibbonButton("View Log/History", this.gitLogCommand, null, Resources.git_16, Resources.git_32),
+				new RibbonButton("Initialize", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
+				new RibbonButton("Clone", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
+				new RibbonButton("Commit Changes", this.gitCommitCommand, null, Resources.git_16, Resources.git_32),
+				new RibbonButton("View Log/History", this.gitLogCommand, null, Resources.git_16, Resources.git_32),
 				new RibbonButton("Refresh", this.gitRefreshCommand, null, Resources.git_16, Resources.git_32),
 				new RibbonButton("Run Git Bash", this.gitBashCommand, null, Resources.git_bash, Resources.git_32),
 			};
@@ -93,7 +97,7 @@ namespace GitWebMatrix
 		void webMatrixHost_TreeItemCreated(object sender, TreeItemEventArgs e)
 		{
 			GetSiteFileSystemItem(e, (item) => {
-				if (!siteFiles.ContainsKey(item.Path))
+				if (!siteFiles.ContainsKey(item.Path) && !item.Path.Contains("\\.git\\"))
 				{
 					siteFiles.Add(item.Path, item);
 					Action act = () => SetFileStatusIcon(item.Path);
@@ -114,35 +118,60 @@ namespace GitWebMatrix
 			siteFiles.Clear();
 			if (this.webMatrixHost != null && !string.IsNullOrEmpty(this.webMatrixHost.WebSite.Path))
 			{
-				tracker.Open(this.webMatrixHost.WebSite.Path);
+				tracker = new FileStatusTracker(this.webMatrixHost.WebSite.Path);
+				this.siteFileWatcherService.RegisterForSiteNotifications(WatcherChangeTypes.All, 
+					new FileSystemEventHandler(this.FileChanged), null);
 			}
 			else
 			{
 				tracker.Close();
+				this.siteFileWatcherService.DeregisterForSiteNotifications(WatcherChangeTypes.All,
+					new FileSystemEventHandler(this.FileChanged), null);
+			}
+		}
+
+		protected void FileChanged(object source, FileSystemEventArgs e)
+		{
+			if ((e.Name.Equals(".git") && e.ChangeType != WatcherChangeTypes.Deleted) ||
+				(e.Name.Equals(".git\\objects") && e.ChangeType == WatcherChangeTypes.Changed) )
+			{
+				tracker.Refresh();
+				RefreshFileStatus();
+			}
+			else
+			{
+				Action act = () =>
+				{
+					tracker.RefreshFileStatus(e.FullPath);
+					SetFileStatusIcon(e.FullPath);
+				};
+				Dispatcher.CurrentDispatcher.Invoke(act, DispatcherPriority.Normal);
 			}
 		}
 
 		private void SetFileStatusIcon(string path)
 		{
+			if (!siteFiles.ContainsKey(path)) return;
+
 			var status = tracker.GetFileStatus(path);
 			if (string.Compare(siteFiles[path].SecondaryIconToolTip, status.ToString()) != 0)
 			{
 				var bitmap = Resources.ResourceManager.GetObject("status_" + status.ToString().ToLower()) as System.Drawing.Bitmap;
-                if (bitmap != null)
-                {
-                    var imageSource = Utility.ConvertBitmapToImageSource(bitmap);
-                    imageSource.Freeze();
-                    siteFiles[path].SecondaryIcon = imageSource;
-                }
-                else
-                {
-                    siteFiles[path].SecondaryIcon = null;
-                }
+				if (bitmap != null)
+				{
+					var imageSource = Utility.ConvertBitmapToImageSource(bitmap);
+					imageSource.Freeze();
+					siteFiles[path].SecondaryIcon = imageSource;
+				}
+				else
+				{
+					siteFiles[path].SecondaryIcon = null;
+				}
 				siteFiles[path].SecondaryIconToolTip = status.ToString();
 			}
 		}
 
-		private void Refresh()
+		private void RefreshFileStatus()
 		{
 			siteFiles.Keys.ToList().ForEach(path =>
 			{

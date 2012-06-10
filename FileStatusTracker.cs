@@ -13,27 +13,18 @@ namespace GitWebMatrix
     class FileStatusTracker
     {
         GitFileStatusTracker tracker;
-        DispatcherTimer timer = new DispatcherTimer();
-        FileSystemWatcher fileSystemWatcher;
-        public event EventHandler OnRefresh = delegate { };
+        Dictionary<string, GitFileStatus> cache;
 
-        public void Open(string directory)
+        public FileStatusTracker(string directory)
         {
             tracker = new GitFileStatusTracker(directory);
-            timer.Interval = TimeSpan.FromMilliseconds(100);
-            timer.Tick += new EventHandler(timer_Tick);
-            timer.Start();
-
-            fileSystemWatcher = new FileSystemWatcher(directory);
-            fileSystemWatcher.IncludeSubdirectories = true;
-            fileSystemWatcher.Changed += new FileSystemEventHandler(fileSystemWatcher_Changed);
-            fileSystemWatcher.EnableRaisingEvents = true;
+            cache = new Dictionary<string, GitFileStatus>();
         }
 
         public void Close()
         {
+            tracker.Dispose();
             tracker = null;
-            timer.Stop();
         }
 
         public bool HasGitRepository
@@ -41,71 +32,30 @@ namespace GitWebMatrix
             get { return (tracker != null && tracker.HasGitRepository); }
         }
 
-        internal void Reload()
+        internal void Refresh()
         {
-            if(HasGitRepository) tracker.Refresh();
+            if (tracker != null) tracker.Refresh();
+            cache.Clear();
         }
 
         internal GitFileStatus GetFileStatus(string path)
         {
-            return HasGitRepository ? tracker.GetFileStatus(path) : GitFileStatus.NotControlled;
+            if(!HasGitRepository) return GitFileStatus.NotControlled;
+
+            if (!cache.ContainsKey(path))
+            {
+                cache[path] = tracker.GetFileStatusNoCacheOld(path);
+            }
+            return cache[path];
         }
 
-        #region Refresh
-
-        internal DateTime lastTimeRefresh = DateTime.Now.AddDays(-1);
-        internal DateTime nextTimeRefresh = DateTime.Now.AddDays(-1);
-
-        private void fileSystemWatcher_Changed(object source, FileSystemEventArgs e)
+        internal void RefreshFileStatus(string path)
         {
-            if (!NoRefresh && tracker != null)
+            if (cache.ContainsKey(path))
             {
-                double delta = DateTime.Now.Subtract(lastTimeRefresh).TotalMilliseconds;
-                if (delta > 500)
-                {
-                    NeedRefresh = true;
-                    lastTimeRefresh = DateTime.Now;
-                    nextTimeRefresh = DateTime.Now;
-                }
+                cache[path] = tracker.GetFileStatusNoCacheOld(path);
             }
         }
-
-        private bool NoRefresh;
-        private bool NeedRefresh;
-
-        private void timer_Tick(Object sender, EventArgs args)
-        {
-            if (NeedRefresh && !NoRefresh)
-            {
-                double delta = DateTime.Now.Subtract(nextTimeRefresh).TotalMilliseconds;
-                if (delta > 200)
-                {
-                    System.Diagnostics.Debug.WriteLine("$$$$ Refresh");
-                    DisableAutoRefresh();
-                    tracker.Refresh();
-                    OnRefresh(this, null);
-                    EnableAutoRefresh();
-                }
-            }
-        }
-
-        internal void EnableAutoRefresh()
-        {
-            timer.Start();
-            NoRefresh = false;
-            NeedRefresh = false;
-            lastTimeRefresh = DateTime.Now;
-        }
-
-        internal void DisableAutoRefresh()
-        {
-            timer.Stop();
-            NoRefresh = true;
-            NeedRefresh = false;
-            lastTimeRefresh = DateTime.Now.AddSeconds(2);
-        }
-
-        #endregion
 
     }
 }
