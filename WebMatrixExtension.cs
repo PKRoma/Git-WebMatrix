@@ -40,7 +40,8 @@ namespace GitWebMatrix
 
 			this.gitInitCommand = new DelegateCommand((object param) => !tracker.HasGitRepository, delegate(object param)
 			{
-				
+				if (this.webMatrixHost != null && this.webMatrixHost.WebSite != null)
+					GitFileStatusTracker.Init(this.webMatrixHost.WebSite.Path);
 			});
 
 			this.gitCloneCommand = new DelegateCommand((object param) => !tracker.HasGitRepository, delegate(object param)
@@ -78,9 +79,9 @@ namespace GitWebMatrix
 
 			var list = new List<RibbonButton>{
 				new RibbonButton("Initialize", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
-				new RibbonButton("Clone", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
-				new RibbonButton("Commit Changes", this.gitCommitCommand, null, Resources.git_16, Resources.git_32),
-				new RibbonButton("View Log/History", this.gitLogCommand, null, Resources.git_16, Resources.git_32),
+				//new RibbonButton("Clone", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
+				//new RibbonButton("Commit Changes", this.gitCommitCommand, null, Resources.git_16, Resources.git_32),
+				//new RibbonButton("View Log/History", this.gitLogCommand, null, Resources.git_16, Resources.git_32),
 				new RibbonButton("Refresh", this.gitRefreshCommand, null, Resources.git_16, Resources.git_32),
 				new RibbonButton("Run Git Bash", this.gitBashCommand, null, Resources.git_bash, Resources.git_32),
 			};
@@ -132,7 +133,7 @@ namespace GitWebMatrix
 
 		protected void FileChanged(object source, FileSystemEventArgs e)
 		{
-			if ((e.Name.Equals(".git") && e.ChangeType != WatcherChangeTypes.Deleted) ||
+			if ((e.Name.Equals(".git") && e.ChangeType == WatcherChangeTypes.Deleted) ||
 				(e.Name.Equals(".git\\objects") && e.ChangeType == WatcherChangeTypes.Changed) )
 			{
 				tracker.Refresh();
