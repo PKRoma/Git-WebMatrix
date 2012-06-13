@@ -28,6 +28,8 @@ namespace GitWebMatrix
 
 		Dictionary<string, ISiteFileSystemItem> siteFiles = new Dictionary<string, ISiteFileSystemItem>();
 
+		private DispatcherTimer timer;
+
 		public GitWebMatrix()
 			: base(Resources.Name)
 		{
@@ -65,9 +67,22 @@ namespace GitWebMatrix
 
 			this.gitRefreshCommand = new DelegateCommand((object param) => true, delegate(object param)
 			{
-				tracker.Refresh();
-				RefreshFileStatus();
+				Refresh();
 			});
+
+			timer = new DispatcherTimer();
+			timer.Interval = TimeSpan.FromMilliseconds(500);
+			timer.Tick += (o, _) =>
+			{
+				timer.Stop();
+				Refresh();
+			};
+		}
+
+		private void Refresh()
+		{
+			tracker.Refresh();
+			RefreshFileStatus();
 		}
 
 		protected override void Initialize(IWebMatrixHost host, ExtensionInitData initData)
@@ -136,8 +151,7 @@ namespace GitWebMatrix
 			if ((e.Name.Equals(".git") && e.ChangeType == WatcherChangeTypes.Deleted) ||
 				(e.Name.Equals(".git\\objects") && e.ChangeType == WatcherChangeTypes.Changed) )
 			{
-				tracker.Refresh();
-				RefreshFileStatus();
+				timer.Start();
 			}
 			else
 			{
