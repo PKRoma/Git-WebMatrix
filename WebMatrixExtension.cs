@@ -13,7 +13,7 @@ namespace GitWebMatrix
 	[Export(typeof(Extension))]
 	public class GitWebMatrix : Extension
 	{
-		FileStatusTracker tracker;
+		FileStatusTracker tracker = new FileStatusTracker();
 
 		[Import(typeof(ISiteFileWatcherService))]
 		private ISiteFileWatcherService siteFileWatcherService { get; set; }
@@ -135,14 +135,14 @@ namespace GitWebMatrix
 			if (this.webMatrixHost != null && !string.IsNullOrEmpty(this.webMatrixHost.WebSite.Path))
 			{
 				tracker = new FileStatusTracker(this.webMatrixHost.WebSite.Path);
-				this.siteFileWatcherService.RegisterForSiteNotifications(WatcherChangeTypes.All, 
-					new FileSystemEventHandler(this.FileChanged), null);
+				this.siteFileWatcherService.RegisterForSiteNotifications(WatcherChangeTypes.All,
+					new FileSystemEventHandler(this.FileChanged), new RenamedEventHandler(FileRenamed));
 			}
 			else
 			{
 				tracker.Close();
 				this.siteFileWatcherService.DeregisterForSiteNotifications(WatcherChangeTypes.All,
-					new FileSystemEventHandler(this.FileChanged), null);
+					new FileSystemEventHandler(this.FileChanged), new RenamedEventHandler(FileRenamed));
 			}
 		}
 
@@ -162,6 +162,10 @@ namespace GitWebMatrix
 				};
 				Dispatcher.CurrentDispatcher.Invoke(act, DispatcherPriority.Normal);
 			}
+		}
+
+		protected void FileRenamed(object source, RenamedEventArgs e)
+		{
 		}
 
 		private void SetFileStatusIcon(string path)

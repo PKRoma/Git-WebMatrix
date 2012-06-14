@@ -13,12 +13,15 @@ namespace GitWebMatrix
     class FileStatusTracker
     {
         GitFileStatusTracker tracker;
-        Dictionary<string, GitFileStatus> cache;
+        Dictionary<string, GitFileStatus> cache = new Dictionary<string, GitFileStatus>();
+
+        public FileStatusTracker()
+        {
+        }
 
         public FileStatusTracker(string directory)
         {
             tracker = new GitFileStatusTracker(directory);
-            cache = new Dictionary<string, GitFileStatus>();
         }
 
         public void Close()
