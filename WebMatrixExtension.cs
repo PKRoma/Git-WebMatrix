@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Windows.Media.Imaging;
+using System.Reflection;
 using System.Windows.Threading;
+using System.Diagnostics;
 using Microsoft.WebMatrix.Extensibility;
 using GitScc;
 
@@ -33,12 +34,19 @@ namespace GitWebMatrix
 		public GitWebMatrix()
 			: base(Resources.Name)
 		{
-			GitBash.GitExePath = new string[] {
-				@"C:\Program Files\Git\bin\sh.exe",
-				@"C:\Program Files (x86)\Git\bin\sh.exe",
+			GitBash.GitExePath = GitSccOptions.Current.GitBashPath;
+			GitBash.UseUTF8FileNames = GitSccOptions.Current.UseUTF8FileNames;
+
+			if (!GitBash.Exists)
+			{
+
+				GitBash.GitExePath = new string[] {
+					@"C:\Program Files\Git\bin\sh.exe",
+					@"C:\Program Files (x86)\Git\bin\sh.exe",
+				}
+				.Where(p => File.Exists(p))
+				.FirstOrDefault();
 			}
-			.Where(p => File.Exists(p))
-			.FirstOrDefault();
 
 			this.gitInitCommand = new DelegateCommand((object param) => !tracker.HasGitRepository, delegate(object param)
 			{
@@ -53,11 +61,12 @@ namespace GitWebMatrix
 
 			this.gitCommitCommand = new DelegateCommand((object param) => tracker.HasGitRepository, delegate(object param)
 			{
-
+				ShowDragonTool("-c");
 			});
+
 			this.gitLogCommand = new DelegateCommand((object param) => tracker.HasGitRepository, delegate(object param)
 			{
-
+				ShowDragonTool();
 			});
 
 			this.gitBashCommand = new DelegateCommand((object param) => GitBash.Exists, delegate(object param)
@@ -95,8 +104,8 @@ namespace GitWebMatrix
 			var list = new List<RibbonButton>{
 				new RibbonButton("Initialize", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
 				//new RibbonButton("Clone", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
-				//new RibbonButton("Commit Changes", this.gitCommitCommand, null, Resources.git_16, Resources.git_32),
-				//new RibbonButton("View Log/History", this.gitLogCommand, null, Resources.git_16, Resources.git_32),
+				new RibbonButton("Commit Changes", this.gitCommitCommand, null, Resources.git_16, Resources.git_32),
+				new RibbonButton("View Log/History", this.gitLogCommand, null, Resources.git_16, Resources.git_32),
 				new RibbonButton("Refresh", this.gitRefreshCommand, null, Resources.git_16, Resources.git_32),
 				new RibbonButton("Run Git Bash", this.gitBashCommand, null, Resources.git_bash, Resources.git_32),
 			};
@@ -197,6 +206,39 @@ namespace GitWebMatrix
 				Action act = () => SetFileStatusIcon(path);
 				Dispatcher.CurrentDispatcher.Invoke(act, DispatcherPriority.Normal);
 			});
+		}
+
+		private void ShowDragonTool(string options = "")
+		{
+			if (this.webMatrixHost == null || string.IsNullOrEmpty(this.webMatrixHost.WebSite.Path)) return;
+
+			var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+			path = Path.Combine(path, "GitUI.dll");
+			var tmpPath = Path.Combine(Path.GetTempPath(), "Dragon.exe");
+
+			var needCopy = !File.Exists(tmpPath);
+			if (!needCopy)
+			{
+				var date1 = File.GetLastWriteTimeUtc(path);
+				var date2 = File.GetLastWriteTimeUtc(tmpPath);
+				needCopy = (date1 > date2);
+			}
+
+			if (needCopy)
+			{
+				try
+				{
+					File.Copy(path, tmpPath, true);
+				}
+				catch // try copy file silently
+				{
+				}
+			}
+
+			if (File.Exists(tmpPath))
+			{
+				Process.Start(tmpPath, "\"" + this.webMatrixHost.WebSite.Path + "\" " + options);
+			}
 		}
 	}
 }
