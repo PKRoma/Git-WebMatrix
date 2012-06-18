@@ -60,5 +60,10 @@ namespace GitWebMatrix
             }
         }
 
+
+        internal void CheckOutFile(string fileName)
+        {
+            if (HasGitRepository) tracker.CheckOutFile(fileName);
+        }
     }
 }

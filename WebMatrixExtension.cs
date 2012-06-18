@@ -4,6 +4,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Windows;
 using System.Windows.Threading;
 using System.Diagnostics;
 using Microsoft.WebMatrix.Extensibility;
@@ -26,6 +27,8 @@ namespace GitWebMatrix
 		private readonly DelegateCommand gitCommitCommand;
 		private readonly DelegateCommand gitLogCommand;
 		private readonly DelegateCommand gitRefreshCommand;
+		private readonly DelegateCommand gitCompareFileCommand;
+		private readonly DelegateCommand gitUndoFileChangeCommand;
 
 		Dictionary<string, ISiteFileSystemItem> siteFiles = new Dictionary<string, ISiteFileSystemItem>();
 
@@ -48,6 +51,8 @@ namespace GitWebMatrix
 				.FirstOrDefault();
 			}
 
+			#region commands
+			
 			this.gitInitCommand = new DelegateCommand((object param) => !tracker.HasGitRepository, delegate(object param)
 			{
 				if (this.webMatrixHost != null && this.webMatrixHost.WebSite != null)
@@ -79,6 +84,18 @@ namespace GitWebMatrix
 				Refresh();
 			});
 
+			this.gitCompareFileCommand = new DelegateCommand((object param) => tracker.HasGitRepository, delegate(object param)
+			{
+
+			});
+
+			this.gitUndoFileChangeCommand = new DelegateCommand((object param) => tracker.HasGitRepository, delegate(object param)
+			{
+				UndoFileChanges(param as string);
+			});
+
+			#endregion
+			
 			timer = new DispatcherTimer();
 			timer.Interval = TimeSpan.FromMilliseconds(500);
 			timer.Tick += (o, _) =>
@@ -88,18 +105,13 @@ namespace GitWebMatrix
 			};
 		}
 
-		private void Refresh()
-		{
-			tracker.Refresh();
-			RefreshFileStatus();
-		}
-
 		protected override void Initialize(IWebMatrixHost host, ExtensionInitData initData)
 		{
 			this.webMatrixHost = host;
 			this.webMatrixHost.WebSiteChanged += new EventHandler<EventArgs>(host_WebSiteChanged);
 			this.webMatrixHost.TreeItemCreated += new EventHandler<TreeItemEventArgs>(webMatrixHost_TreeItemCreated);
 			this.webMatrixHost.TreeItemRemoved += new EventHandler<TreeItemEventArgs>(webMatrixHost_TreeItemRemoved);
+			this.webMatrixHost.ContextMenuOpening += new EventHandler<ContextMenuOpeningEventArgs>(webMatrixHost_ContextMenuOpening);
 
 			var list = new List<RibbonButton>{
 				new RibbonButton("Initialize", this.gitInitCommand, null, Resources.git_init, Resources.git_32),
@@ -107,11 +119,19 @@ namespace GitWebMatrix
 				new RibbonButton("Commit Changes", this.gitCommitCommand, null, Resources.git_16, Resources.git_32),
 				new RibbonButton("View Log/History", this.gitLogCommand, null, Resources.git_16, Resources.git_32),
 				new RibbonButton("Refresh", this.gitRefreshCommand, null, Resources.git_16, Resources.git_32),
-				new RibbonButton("Run Git Bash", this.gitBashCommand, null, Resources.git_bash, Resources.git_32),
+				new RibbonButton("Run Git Bash", this.gitBashCommand, null, Resources.git_16, Resources.git_32),
 			};
 			var button = new RibbonSplitButton("Git", this.gitBashCommand, null, list, Resources.git_16, Resources.git_32);
 			initData.RibbonItems.Add(button);
 
+		}
+
+		#region refresh related
+
+		private void Refresh()
+		{
+			tracker.Refresh();
+			RefreshFileStatus();
 		}
 
 		void webMatrixHost_TreeItemRemoved(object sender, TreeItemEventArgs e)
@@ -208,6 +228,10 @@ namespace GitWebMatrix
 			});
 		}
 
+		#endregion
+
+		#region Deragon tool
+
 		private void ShowDragonTool(string options = "")
 		{
 			if (this.webMatrixHost == null || string.IsNullOrEmpty(this.webMatrixHost.WebSite.Path)) return;
@@ -240,5 +264,56 @@ namespace GitWebMatrix
 				Process.Start(tmpPath, "\"" + this.webMatrixHost.WebSite.Path + "\" " + options);
 			}
 		}
+
+		#endregion
+
+		#region context menu related
+
+		void webMatrixHost_ContextMenuOpening(object sender, ContextMenuOpeningEventArgs e)
+		{
+			ISiteItem siteItem = e.Items.FirstOrDefault<ISiteItem>();
+			if (siteItem != null)
+			{
+				ISiteFile siteFile = siteItem as ISiteFile;
+
+				if (tracker.HasGitRepository)
+				{
+					if (siteFile != null)
+					{
+						var status = tracker.GetFileStatus(siteFile.Path);
+
+						if (status == GitFileStatus.Modified || status == GitFileStatus.Staged)
+						{
+							//e.AddMenuItem(new ContextMenuItem("Compare ...", Utility.ConvertBitmapToImageSource(Resources.git_16), this.gitCompareFileCommand, siteFile.Path));
+							e.AddMenuItem(new ContextMenuItem("Undo File Changes ", Utility.ConvertBitmapToImageSource(Resources.git_16), this.gitUndoFileChangeCommand, siteFile.Path));
+						}
+					}
+
+					//e.AddMenuItem(new ContextMenuItem("Commit Changes", Utility.ConvertBitmapToImageSource(Resources.git_16), this.gitCommitCommand, null));
+					//e.AddMenuItem(new ContextMenuItem("View Log/History", Utility.ConvertBitmapToImageSource(Resources.git_16), this.gitLogCommand, null));
+				}
+				else
+				{
+					e.AddMenuItem(new ContextMenuItem("Create Git Repository", Utility.ConvertBitmapToImageSource(Resources.git_16), this.gitInitCommand, null));
+				}
+			}
+		}
+
+		private void UndoFileChanges(string fileName)
+		{
+			GitFileStatus status = tracker.GetFileStatus(fileName);
+			if (status == GitFileStatus.Modified || status == GitFileStatus.Staged ||
+				status == GitFileStatus.Deleted || status == GitFileStatus.Removed)
+			{
+				if (MessageBox.Show("Are you sure you want to undo changes for " + Path.GetFileName(fileName) +
+					" and restore a version from the last commit? ",
+					"Undo Changes", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+				{
+					tracker.CheckOutFile(fileName);
+				}
+			}
+		}
+
+		#endregion
 	}
 }
